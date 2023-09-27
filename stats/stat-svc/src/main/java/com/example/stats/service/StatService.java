@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,9 +39,15 @@ public class StatService {
 
         List<ViewStats> viewStatsList;
         if (unique) {
-            viewStatsList = statRepository.findAllUnique(start, end, uris);
+            viewStatsList = CollectionUtils.isEmpty(uris) ?
+                    statRepository.findAllUnique(start, end)
+                    :
+                    statRepository.findAllUnique(start, end, uris);
         } else {
-            viewStatsList = statRepository.findAll(start, end, uris);
+            viewStatsList = CollectionUtils.isEmpty(uris) ?
+                    statRepository.findAll(start, end)
+                    :
+                    statRepository.findAll(start, end, uris);
         }
         return viewStatsList.stream()
                 .map(ViewStatMapper::convertToViewStatsDto)
