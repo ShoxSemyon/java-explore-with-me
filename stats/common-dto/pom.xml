@@ -8,6 +8,7 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
+	<groupId>com.example</groupId>
 	<artifactId>common-dto</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>common-dto</name>
@@ -15,6 +16,5 @@
 	<properties>
 		<java.version>11</java.version>
 	</properties>
-	<packaging>jar</packaging>
 
 </project>
