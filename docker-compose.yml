@@ -28,3 +28,14 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
+  main-db:
+    image: postgres:14-alpine
+    container_name: main-db
+    volumes:
+      - /var/lib/postgresql/data/
+    ports:
+      - "6542:5432"
+    environment:
+      - POSTGRES_DB=mainDb
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root

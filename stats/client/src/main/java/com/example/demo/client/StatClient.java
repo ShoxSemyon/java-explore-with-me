@@ -1,11 +1,14 @@
 package com.example.demo.client;
 
 import com.example.stats.dto.EndpointHitDto;
+import com.example.stats.dto.ViewStatsDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
@@ -25,16 +28,20 @@ public class StatClient extends BaseClient {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl + ""))
-                        .requestFactory(HttpComponentsClientHttpRequestFactory::new)
+                        .requestFactory(SimpleClientHttpRequestFactory::new)
                         .build()
         );
     }
 
-    public ResponseEntity<Object> create(EndpointHitDto endpointHitDto) {
-        return post("/hit", endpointHitDto);
+    public ResponseEntity<EndpointHitDto> create(EndpointHitDto endpointHitDto) {
+        return makeAndSendRequest(HttpMethod.POST,
+                "/hit",
+                null, endpointHitDto,
+                new ParameterizedTypeReference<EndpointHitDto>() {
+                });
     }
 
-    public ResponseEntity<Object> getAll(Boolean unique,
+    public ResponseEntity<List<ViewStatsDto>> getAll(Boolean unique,
                                          LocalDateTime start,
                                          LocalDateTime end,
                                          List<String> uris) {
@@ -42,11 +49,14 @@ public class StatClient extends BaseClient {
         Map<String, Object> parameters = Map.of(
                 "start", format.format(start),
                 "end", format.format(end),
-                "uris", uris,
+                "uris",String.join(",",uris),
                 "unique", unique
         );
-
-        return get("/stats?start={start}&end={end}&uris={uris}&unique={unique}", parameters);
+        return makeAndSendRequest(HttpMethod.GET,
+                "/stats?start={start}&end={end}&uris={uris}&unique={unique}",
+                parameters, null,
+                new ParameterizedTypeReference<List<ViewStatsDto>>() {
+                });
     }
 
 }
