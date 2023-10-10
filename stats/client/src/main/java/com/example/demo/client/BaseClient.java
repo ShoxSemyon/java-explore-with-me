@@ -43,7 +43,7 @@ public class BaseClient {
         return headers;
     }
 
-    private static<T> ResponseEntity<T> prepareGatewayResponse(ResponseEntity<T> response) {
+    private static <T> ResponseEntity<T> prepareGatewayResponse(ResponseEntity<T> response) {
         if (response.getStatusCode().is2xxSuccessful()) {
             return response;
         }

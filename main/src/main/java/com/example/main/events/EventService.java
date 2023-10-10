@@ -90,12 +90,7 @@ public class EventService {
 
         setStatus(newEventDto, event);
 
-        event = eventRepository.save(event);
-
-        //TODO add view
-
-
-        return eventMapper.convertToEventDto(event);
+        return eventMapper.convertToEventDto(eventRepository.save(event));
     }
 
     @Transactional
@@ -151,7 +146,6 @@ public class EventService {
                     .map(eventMapper::convertToEventDto)
                     .collect(Collectors.toList());
         }
-        //TODO add view
         BooleanBuilder booleanBuilder = getPredicateForAdminQuery(eventAdminRequestParam);
 
         return eventRepository.findAll(booleanBuilder, new OffsetBasedPageRequest(
@@ -169,40 +163,45 @@ public class EventService {
 
         EventFullDto eventFullDto = eventMapper.convertToEventDto(event);
 
-        sendHit("/events/" + eventId);
-
-        setViewForEventFullDto(false,
+        setViewForEventFullDto(
                 event.getCreatedOn(),
                 LocalDateTime.now(),
                 List.of("/events/" + eventId, "/events/4"),
                 eventFullDto);
 
+        sendHit("/events/" + eventId);
         return eventFullDto;
     }
 
     public List<EventShortDto> getAllForPublic(EventPublicRequestParam eventPublicRequestParam) {
         BooleanBuilder booleanBuilder = getPredicateForPublicQuery(eventPublicRequestParam);
 
-        List<Event> events = eventRepository.findAllByState(booleanBuilder, new OffsetBasedPageRequest(
+        List<Event> events = eventRepository.findAll(booleanBuilder, new OffsetBasedPageRequest(
                         eventPublicRequestParam.getFrom(),
-                        eventPublicRequestParam.getSize()),
-                EventStatus.PUBLISHED);
+                        eventPublicRequestParam.getSize()))
+                .stream()
+                .collect(Collectors.toList());
 
         List<EventShortDto> eventShortDtos = events
                 .stream()
                 .map(eventMapper::convertToEventShortDto)
                 .collect(Collectors.toList());
 
-        sendHit(ServletUriComponentsBuilder
-                .fromCurrentRequestUri()
-                .toUriString());
+        String uri = ServletUriComponentsBuilder.fromCurrentRequest().toUriString();
+        sendHit(uri.substring(uri.indexOf("/", 10)));
 
         setViewForListEventShortDto(events, eventShortDtos);
 
-        eventShortDtos.sort(eventPublicRequestParam.getSort() == SortEvent.EVENT_DATE ?
-                new EventDateComparable() : new EventViewComparable());
+        sortEvent(eventPublicRequestParam, eventShortDtos);
 
         return eventShortDtos;
+    }
+
+    private void sortEvent(EventPublicRequestParam eventPublicRequestParam, List<EventShortDto> eventShortDtos) {
+        if (eventPublicRequestParam.getSort() != null) {
+            eventShortDtos.sort(eventPublicRequestParam.getSort() == SortEvent.EVENT_DATE ?
+                    new EventDateComparable() : new EventViewComparable());
+        }
     }
 
     private void setViewForListEventShortDto(List<Event> events, List<EventShortDto> eventShortDtos) {
@@ -215,6 +214,8 @@ public class EventService {
             uris.add("/events/" + event.getId());
         }
         List<ViewStatsDto> viewStatsDtoList = getViewStatsDtos(false, start, end, uris);
+        if (CollectionUtils.isEmpty(viewStatsDtoList)) return;
+
         Map<Long, ViewStatsDto> viewStatsDtoMap = viewStatsDtoList.stream()
                 .collect(Collectors.toMap(viewStatsDto ->
                                 Long.parseLong(
@@ -227,9 +228,10 @@ public class EventService {
 
 
         eventShortDtos.forEach(e -> {
-            e.setViews(viewStatsDtoMap.getOrDefault(e.getId(),
-                            null)
-                    .getHits());
+            ViewStatsDto viewStatsDto = viewStatsDtoMap.getOrDefault(e.getId(),
+                    null);
+            e.setViews(viewStatsDto != null ?
+                    viewStatsDto.getHits() : 0);
         });
     }
 
@@ -249,8 +251,8 @@ public class EventService {
         }
     }
 
-    private void setViewForEventFullDto(Boolean uniq, LocalDateTime start, LocalDateTime end, List<String> uris, EventFullDto dto) {
-        List<ViewStatsDto> viewStatsDtoList = getViewStatsDtos(uniq, start, end, uris);
+    private void setViewForEventFullDto(LocalDateTime start, LocalDateTime end, List<String> uris, EventFullDto dto) {
+        List<ViewStatsDto> viewStatsDtoList = getViewStatsDtos(true, start, end, uris);
 
         if (viewStatsDtoList != null) {
             viewStatsDtoList.stream()
@@ -268,7 +270,6 @@ public class EventService {
                 end,
                 uris).getBody();
     }
-
 
     private BooleanBuilder getPredicateForAdminQuery(EventAdminRequestParam eventAdminRequestParam) {
         QEvent qevent = QEvent.event;
@@ -295,6 +296,7 @@ public class EventService {
     private BooleanBuilder getPredicateForPublicQuery(EventPublicRequestParam eventPublicRequestParam) {
         QEvent qevent = QEvent.event;
         BooleanBuilder booleanBuilder = new BooleanBuilder();
+        booleanBuilder.and(qevent.state.eq(EventStatus.PUBLISHED));
 
         if (eventPublicRequestParam.getOnlyAvailable())
             booleanBuilder.and(qevent.participantLimit.gt(qevent.confirmedRequests));
@@ -316,10 +318,12 @@ public class EventService {
     }
 
     private void checkPublishDate(NewEventDto newEventDto, Event event) {
-        if (newEventDto.getStateAction().equals(StateAction.PUBLISH_EVENT) &&
-                ((newEventDto.getEventDate() != null &&
-                        newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) ||
-                        event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))))
+
+        if (newEventDto.getStateAction() != null
+                && newEventDto.getStateAction().equals(StateAction.PUBLISH_EVENT)
+                && ((newEventDto.getEventDate() != null &&
+                newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) ||
+                event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))))
             throw new EventDateException("Field: eventDate. " +
                     "Error: публикация возможна за час до старта события ");
     }
@@ -384,4 +388,12 @@ public class EventService {
                 .format("Event with id=%s was not found",
                         eventId));
     }
+
+    public static NotFoundException createNotFoundRequestException(Long eventId) {
+        return new NotFoundException(String
+                .format("Request with id=%s was not found",
+                        eventId));
+    }
+
+
 }

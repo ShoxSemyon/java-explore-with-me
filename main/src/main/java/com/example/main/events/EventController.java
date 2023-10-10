@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.groups.Default;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,7 +28,9 @@ public class EventController {
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(
-            @RequestBody @Validated({NotNullMarker.class, EventBeginMarker.class}) NewEventDto newEventDto,
+            @RequestBody @Validated({NotNullMarker.class,
+                    EventBeginMarker.class,
+                    Default.class}) NewEventDto newEventDto,
             @PathVariable @NotNull Long userId) {
 
         log.info("Сохранение EventDto = {}", newEventDto);
@@ -36,9 +39,10 @@ public class EventController {
     }
 
     @PatchMapping("/users/{userId}/events/{eventId}")
-    public EventFullDto updateUser(@RequestBody @Validated({EventBeginMarker.class}) NewEventDto newEventDto,
-                                   @PathVariable @NotNull Long userId,
-                                   @PathVariable @NotNull Long eventId) {
+    public EventFullDto updateUser(
+            @RequestBody @Validated({EventBeginMarker.class, Default.class}) NewEventDto newEventDto,
+            @PathVariable @NotNull Long userId,
+            @PathVariable @NotNull Long eventId) {
 
         log.info("Обновление EventDto пользователем = {}", newEventDto);
 
@@ -132,5 +136,7 @@ public class EventController {
                 size
         ));
     }
+
+
 
 }

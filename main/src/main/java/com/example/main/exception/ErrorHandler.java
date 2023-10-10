@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,7 +28,7 @@ public class ErrorHandler {
                 LocalDateTime.now());
     }
 
-    @ExceptionHandler({EventDateException.class,EventStatusException.class})
+    @ExceptionHandler({EventStatusException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleDateEventError(final RuntimeException e) {
         log.info(e.getMessage());
@@ -58,12 +59,15 @@ public class ErrorHandler {
                 LocalDateTime.now());
     }
 
-/*    @ExceptionHandler({UnavailableException.class})
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({UnavailableException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleUnavailableError(final RuntimeException e) {
         log.info(e.getMessage());
-        return new ErrorResponse("E002", e.getMessage());
-    }*/
+        return new ErrorResponse("CONFLICT",
+                "Integrity constraint has been violated.",
+                e.getMessage(),
+                LocalDateTime.now());
+    }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleThrowable(final Throwable e) {
@@ -75,8 +79,11 @@ public class ErrorHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
-    public ErrorResponse handleMethodArgumentTypeMismatch(final Throwable e) {
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class,
+            NumberFormatException.class,
+            MethodArgumentNotValidException.class,
+            EventDateException.class})
+    public ErrorResponse handleBadRequest(final Throwable e) {
         log.info(e.getMessage());
         return new ErrorResponse("BAD_REQUEST",
                 "Incorrectly made request.",
