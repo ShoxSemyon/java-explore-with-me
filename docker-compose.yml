@@ -2,7 +2,7 @@ version: '3.1'
 services:
   stats-server:
     build: ./stats/stat-svc
-    image: server:latest
+    image: stats:latest
     container_name: stats-server
     ports:
       - "9090:9090"
@@ -16,6 +16,25 @@ services:
       - DB_HOST=stats-db
       - DB_PORT=5432
 
+  main-server:
+    build: ./main
+    image: server:latest
+    container_name: main-server
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - main-db
+      - stats-server
+    environment:
+      - DB_NAME=mainDb
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - DB_HOST=main-db
+      - DB_PORT=5432
+      - STATS_HOST=stats-server
+      - STATS_PORT=9090
+
   stats-db:
     image: postgres:14-alpine
     container_name: stats-db
@@ -28,3 +47,14 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
+  main-db:
+    image: postgres:14-alpine
+    container_name: main-db
+    volumes:
+      - /var/lib/postgresql/data/
+    ports:
+      - "6542:5432"
+    environment:
+      - POSTGRES_DB=mainDb
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
