@@ -27,6 +27,7 @@ public class UserService {
                 .save(userMapper
                         .convertToUser(userDto)));
     }
+
     @Transactional
     public void delete(Long userId) {
         userRepository.findById(userId)

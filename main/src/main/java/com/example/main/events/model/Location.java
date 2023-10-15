@@ -1,5 +1,6 @@
 package com.example.main.events.model;
 
+import com.example.main.events.dto.LocationType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
@@ -24,4 +25,9 @@ public class Location {
     Double lat;
 
     Double lon;
+
+    Double radius;
+
+    @Enumerated(EnumType.STRING)
+    LocationType type;
 }

@@ -3,16 +3,16 @@ package com.example.main.events;
 import com.example.demo.client.StatClient;
 import com.example.main.category.CategoryRepository;
 import com.example.main.category.CategoryService;
-import com.example.main.events.dto.EventFullDto;
-import com.example.main.events.dto.EventShortDto;
-import com.example.main.events.dto.NewEventDto;
-import com.example.main.events.dto.StateAction;
+import com.example.main.events.dto.*;
 import com.example.main.events.mapper.EventMapper;
+import com.example.main.events.mapper.LocationMapper;
 import com.example.main.events.model.Event;
 import com.example.main.events.model.EventStatus;
 import com.example.main.events.model.QEvent;
+import com.example.main.events.model.QLocation;
 import com.example.main.events.request.EventAdminRequestParam;
 import com.example.main.events.request.EventPublicRequestParam;
+import com.example.main.events.request.LocationAdminRequestParam;
 import com.example.main.events.request.SortEvent;
 import com.example.main.exception.EventDateException;
 import com.example.main.exception.EventStatusException;
@@ -25,6 +25,7 @@ import com.example.main.utils.OffsetBasedPageRequest;
 import com.example.stats.dto.EndpointHitDto;
 import com.example.stats.dto.ViewStatsDto;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,11 @@ public class EventService {
 
     private final EventRepository eventRepository;
 
+    private final LocationRepository locationRepository;
+
     private final EventMapper eventMapper;
+
+    private final LocationMapper locationMapper;
 
     private final StatClient statClient;
 
@@ -197,6 +202,37 @@ public class EventService {
         return eventShortDtos;
     }
 
+    public List<LocationDto> getAllLocation(LocationAdminRequestParam param) {
+        BooleanBuilder booleanBuilder = getPredicateForLocation(param);
+
+        return locationRepository.findAll(booleanBuilder,
+                        new OffsetBasedPageRequest(param.getFrom(), param.getSize()))
+                .stream()
+                .map(locationMapper::convertToLocationDto)
+                .collect(Collectors.toList());
+    }
+
+    private BooleanBuilder getPredicateForLocation(LocationAdminRequestParam param) {
+        QLocation qLocation = QLocation.location;
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+
+        if (param.getMinRadius() != null) booleanBuilder.and(qLocation.radius.goe(param.getMinRadius()));
+        if (param.getMaxRadius() != null) booleanBuilder.and(qLocation.radius.loe(param.getMaxRadius()));
+        if (param.getType() != null) booleanBuilder.and(qLocation.type.eq(param.getType()));
+        if (param.getLat() != null && param.getLon() != null && param.getDistance() != null) {
+
+            booleanBuilder.and(Expressions.booleanTemplate("function('distance', ({0}),({1}),({2}),({3}))",
+                            param.getLat(),
+                            param.getLon(),
+                            qLocation.lat,
+                            qLocation.lon)
+                    .castToNum(Double.class)
+                    .subtract(param.getDistance()).loe(0));
+        }
+
+        return booleanBuilder;
+    }
+
     private void sortEvent(EventPublicRequestParam eventPublicRequestParam, List<EventShortDto> eventShortDtos) {
         if (eventPublicRequestParam.getSort() != null) {
             eventShortDtos.sort(eventPublicRequestParam.getSort() == SortEvent.EVENT_DATE ?
@@ -205,6 +241,8 @@ public class EventService {
     }
 
     private void setViewForListEventShortDto(List<Event> events, List<EventShortDto> eventShortDtos) {
+        if (CollectionUtils.isEmpty(events)) return;
+
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = LocalDateTime.now();
         List<String> uris = new ArrayList<>();
@@ -273,6 +311,7 @@ public class EventService {
 
     private BooleanBuilder getPredicateForAdminQuery(EventAdminRequestParam eventAdminRequestParam) {
         QEvent qevent = QEvent.event;
+        QLocation qLocation = QEvent.event.location;
         BooleanBuilder booleanBuilder = new BooleanBuilder();
 
         if (!CollectionUtils.isEmpty(eventAdminRequestParam.getUsers()))
@@ -290,11 +329,25 @@ public class EventService {
         if (eventAdminRequestParam.getRangeEnd() != null)
             booleanBuilder.and(qevent.eventDate.before(eventAdminRequestParam.getRangeEnd()));
 
+        if (eventAdminRequestParam.getLat() != null
+                && eventAdminRequestParam.getLon() != null
+                && eventAdminRequestParam.getDistance() != null) {
+
+            booleanBuilder.and(Expressions.booleanTemplate("function('distance', ({0}),({1}),({2}),({3}))",
+                            eventAdminRequestParam.getLat(),
+                            eventAdminRequestParam.getLon(),
+                            qLocation.lat,
+                            qLocation.lon)
+                    .castToNum(Double.class)
+                    .subtract(eventAdminRequestParam.getDistance()).loe(0));
+        }
+
         return booleanBuilder;
     }
 
     private BooleanBuilder getPredicateForPublicQuery(EventPublicRequestParam eventPublicRequestParam) {
         QEvent qevent = QEvent.event;
+        QLocation qLocation = QEvent.event.location;
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         booleanBuilder.and(qevent.state.eq(EventStatus.PUBLISHED));
 
@@ -314,6 +367,19 @@ public class EventService {
         if (eventPublicRequestParam.getRangeStart() != null)
             booleanBuilder.and(qevent.eventDate.after(eventPublicRequestParam.getRangeStart()));
 
+        if (eventPublicRequestParam.getLat() != null
+                && eventPublicRequestParam.getLon() != null
+                && eventPublicRequestParam.getDistance() != null) {
+
+            booleanBuilder.and(Expressions.booleanTemplate("function('distance', ({0}),({1}),({2}),({3}))",
+                            eventPublicRequestParam.getLat(),
+                            eventPublicRequestParam.getLon(),
+                            qLocation.lat,
+                            qLocation.lon)
+                    .castToNum(Double.class)
+                    .subtract(eventPublicRequestParam.getDistance()).loe(0));
+        }
+
         return booleanBuilder;
     }
 
@@ -327,7 +393,6 @@ public class EventService {
             throw new EventDateException("Field: eventDate. " +
                     "Error: публикация возможна за час до старта события ");
     }
-
 
     private void setCategory(NewEventDto newEventDto, Event event) {
         if (newEventDto.getCategory() == null) return;
@@ -394,6 +459,5 @@ public class EventService {
                 .format("Request with id=%s was not found",
                         eventId));
     }
-
 
 }

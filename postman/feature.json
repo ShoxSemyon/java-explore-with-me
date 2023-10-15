@@ -1,0 +1,519 @@
+{
+	"info": {
+		"_postman_id": "508f61a0-5043-4ee7-a6e6-c5a9fc51285c",
+		"name": "Test Explore With Me - fuature",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15133507"
+	},
+	"item": [
+		{
+			"name": "add User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"userId\",JSON.parse(responseBody)[\"id\"])\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.status(201);    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Sara Rolfson\",\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/users",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add Category",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"caregoryId\",JSON.parse(responseBody)[\"id\"])\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.status(201);    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"{{$randomWord}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/categories",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add Event with default parametrs",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"eventId\",JSON.parse(responseBody)[\"id\"])\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.status(201);    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"annotation\": \"Sequi eum officia exercitationem. Provident cumque id tenetur iste rerum quisquam. Et quisquam quae sed. Nesciunt consectetur tempore et voluptas est natus.\",\r\n    \"category\": {{caregoryId}},\r\n    \"description\": \"Laudantium nam non ut. Aut nobis nisi ex est quis iste ipsam in. Hic distinctio sit expedita distinctio deserunt nulla non repudiandae. Et est nihil odit deleniti adipisci dolore. Aut quaerat magnam enim beatae velit cumque.\\n \\rDelectus blanditiis quaerat at voluptates debitis ipsa est officia sed. Rerum qui quisquam quibusdam rem amet. Rerum aut ea quasi in consectetur natus. Hic et laudantium nobis placeat est suscipit.\\n \\rFuga rerum ducimus quasi. Qui nihil aut voluptatum perspiciatis consequatur libero nam velit praesentium. Assumenda doloribus debitis et dolorum deleniti reprehenderit.\",\r\n    \"eventDate\": \"2023-11-15 22:39:44\",\r\n    \"location\": {\r\n        \"lat\": {{$randomLatitude}},\r\n        \"lon\": {{$randomLongitude}}\r\n    },\r\n    \"paid\": \"true\",\r\n    \"participantLimit\": \"737\",\r\n    \"requestModeration\": \"true\",\r\n    \"title\": \"Nisi modi ea aliquid alias.\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/users/{{userId}}/events",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"{{userId}}",
+						"events"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update Location in Event",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"radius\",_.random(1, 50, true))\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"lat\",JSON.parse(responseBody)[\"location\"][\"lat\"])\r",
+							"pm.globals.set(\"lon\",JSON.parse(responseBody)[\"location\"][\"lon\"])\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"location\": {\r\n        \"lat\": {{$randomLatitude}},\r\n        \"lon\": {{$randomLongitude}},\r\n        \"radius\": {{radius}},\r\n        \"type\": \"MUSEUM\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/users/{{userId}}/events/{{eventId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"{{userId}}",
+						"events",
+						"{{eventId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get All location",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.variables.set(\"newLat\",pm.globals.get(\"lat\")+0.0001);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/events/locations?lat={{newLat}}&lon={{lon}}&distance=0.1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"events",
+						"locations"
+					],
+					"query": [
+						{
+							"key": "lat",
+							"value": "{{newLat}}"
+						},
+						{
+							"key": "lon",
+							"value": "{{lon}}"
+						},
+						{
+							"key": "distance",
+							"value": "0.1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get All location Empty list",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.variables.set(\"newLat\",pm.globals.get(\"lat\")+0.001);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/events/locations?lat={{newLat}}&lon={{lon}}&distance=0.1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"events",
+						"locations"
+					],
+					"query": [
+						{
+							"key": "lat",
+							"value": "{{newLat}}"
+						},
+						{
+							"key": "lon",
+							"value": "{{lon}}"
+						},
+						{
+							"key": "distance",
+							"value": "0.1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update Location in Event Copy",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"stateAction\": \"PUBLISH_EVENT\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/events/{{eventId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"events",
+						"{{eventId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all public event",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.variables.set(\"newLat\",pm.globals.get(\"lat\")+0.0001);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/events?lat={{newLat}}&lon={{lon}}&distance=0.1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"events"
+					],
+					"query": [
+						{
+							"key": "lat",
+							"value": "{{newLat}}"
+						},
+						{
+							"key": "lon",
+							"value": "{{lon}}"
+						},
+						{
+							"key": "distance",
+							"value": "0.1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all event for admin",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.variables.set(\"newLat\",pm.globals.get(\"lat\")+0.0001);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+							"    pm.response.to.be.ok;    \r",
+							"    pm.response.to.be.withBody;\r",
+							"    pm.response.to.be.json;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/admin/events?lat={{newLat}}&lon={{lon}}&distance=0.1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"events"
+					],
+					"query": [
+						{
+							"key": "lat",
+							"value": "{{newLat}}"
+						},
+						{
+							"key": "lon",
+							"value": "{{lon}}"
+						},
+						{
+							"key": "distance",
+							"value": "0.1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

@@ -1,7 +1,6 @@
 package com.example.main.request;
 
 import com.example.demo.client.StatClient;
-import com.example.main.RequestRepository;
 import com.example.main.events.EventRepository;
 import com.example.main.events.EventService;
 import com.example.main.events.model.Event;
@@ -116,6 +115,7 @@ public class RequestService {
         return injectResultRequest(request);
 
     }
+
 
     private EventRequestStatusUpdateResultDto injectResultRequest(List<Request> requests) {
         EventRequestStatusUpdateResultDto result = EventRequestStatusUpdateResultDto.builder()

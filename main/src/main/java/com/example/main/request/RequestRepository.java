@@ -1,4 +1,4 @@
-package com.example.main;
+package com.example.main.request;
 
 import com.example.main.request.Request;
 import org.springframework.data.jpa.repository.JpaRepository;
