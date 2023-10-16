@@ -4,7 +4,9 @@ import com.example.main.events.dto.*;
 import com.example.main.events.model.EventStatus;
 import com.example.main.events.request.EventAdminRequestParam;
 import com.example.main.events.request.EventPublicRequestParam;
+import com.example.main.events.request.LocationAdminRequestParam;
 import com.example.main.events.request.SortEvent;
+import com.example.main.exception.InvalidParamException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -84,10 +86,14 @@ public class EventController {
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
+            @RequestParam(required = false) Double distance,
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
 
         log.info("Запрос событий для администратора");
+        chekCoordinates(lat, lon, distance);
 
         return eventService.getAllForAdmin(new EventAdminRequestParam(
                 users,
@@ -96,9 +102,45 @@ public class EventController {
                 rangeStart,
                 rangeEnd,
                 from,
+                size,
+                lat,
+                lon,
+                distance
+        ));
+    }
+
+    @GetMapping("/admin/events/locations")
+    public List<LocationDto> getAllLocationForAdmin(
+            @RequestParam(required = false) Double minRadius,
+            @RequestParam(required = false) Double maxRadius,
+            @RequestParam(required = false) LocationType type,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
+            @RequestParam(required = false) Double distance,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        if (maxRadius != null && minRadius != null) {
+            if (minRadius > maxRadius)
+                throw new InvalidParamException("minRadius should not be greater than maxRadius");
+        }
+        chekCoordinates(lat, lon, distance);
+
+        log.info("Запрос локаций для события администратором");
+
+        return eventService.getAllLocation(new LocationAdminRequestParam(
+                minRadius,
+                maxRadius,
+                type,
+                lat,
+                lon,
+                distance,
+                from,
                 size
         ));
     }
+
+
 
     @GetMapping("/events/{eventId}")
     public EventFullDto getForPublic(@PathVariable @NotNull Long eventId) {
@@ -116,10 +158,17 @@ public class EventController {
                                                @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
                                                @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                                @RequestParam(required = false) SortEvent sort,
+                                               @RequestParam(required = false) Double lat,
+                                               @RequestParam(required = false) Double lon,
+                                               @RequestParam(required = false) Double distance,
                                                @RequestParam(defaultValue = "0") Integer from,
                                                @RequestParam(defaultValue = "10") Integer size) {
 
         if (rangeEnd == null && rangeStart == null) rangeStart = LocalDateTime.now();
+        if ((rangeEnd != null && rangeStart != null)&& rangeStart.isAfter(rangeEnd))
+            throw new InvalidParamException("rangeStart must be begin rangeEnd");
+
+        chekCoordinates(lat, lon, distance);
 
 
         log.info("Запрос событий");
@@ -133,10 +182,22 @@ public class EventController {
                 onlyAvailable,
                 sort,
                 from,
-                size
+                size,
+                lat,
+                lon,
+                distance
         ));
     }
 
-
-
+    private void chekCoordinates(Double lat, Double lon, Double distance) {
+        if (lat != null || lon != null || distance != null) {
+            if (lat == null || lon == null || distance == null) {
+                throw new InvalidParamException("If at least 1 parameter lat,long,distance is set," +
+                        " then the other two should not be equal to 0");
+            }
+            if (distance == 0.0) {
+                throw new InvalidParamException("distance must be greater than 0");
+            }
+        }
+    }
 }

@@ -82,7 +82,8 @@ public class ErrorHandler {
     @ExceptionHandler({MethodArgumentTypeMismatchException.class,
             NumberFormatException.class,
             MethodArgumentNotValidException.class,
-            EventDateException.class})
+            EventDateException.class,
+            InvalidParamException.class})
     public ErrorResponse handleBadRequest(final Throwable e) {
         log.info(e.getMessage());
         return new ErrorResponse("BAD_REQUEST",

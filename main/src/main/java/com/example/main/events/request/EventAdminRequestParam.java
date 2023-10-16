@@ -19,14 +19,25 @@ public class EventAdminRequestParam {
     List<Long> categories;
     LocalDateTime rangeStart;
     LocalDateTime rangeEnd;
+
     Integer from;
+
     Integer size;
 
-   public boolean usersStatesCategoriesStartEndIsNull() {
+    Double lat;
+
+    Double lon;
+
+    Double distance;
+
+    public boolean usersStatesCategoriesStartEndIsNull() {
         return CollectionUtils.isEmpty(users) &&
                 CollectionUtils.isEmpty(states) &&
                 CollectionUtils.isEmpty(categories) &&
                 rangeStart == null &&
-                rangeEnd == null;
+                rangeEnd == null &&
+                lat == null &&
+                lon == null &&
+                distance == null;
     }
 }

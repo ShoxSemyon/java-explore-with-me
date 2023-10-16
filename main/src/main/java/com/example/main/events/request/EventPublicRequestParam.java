@@ -30,4 +30,10 @@ public class EventPublicRequestParam {
 
     Integer size;
 
+    Double lat;
+
+    Double lon;
+
+    Double distance;
+
 }
