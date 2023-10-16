@@ -165,6 +165,8 @@ public class EventController {
                                                @RequestParam(defaultValue = "10") Integer size) {
 
         if (rangeEnd == null && rangeStart == null) rangeStart = LocalDateTime.now();
+        if ((rangeEnd != null && rangeStart != null)&& rangeStart.isAfter(rangeEnd))
+            throw new InvalidParamException("rangeStart must be begin rangeEnd");
 
         chekCoordinates(lat, lon, distance);
 
